@@ -1,0 +1,21 @@
+@use "./mixins-vars"as *;
+
+h1 {
+    @include font(var(--fwH1), var(--fsH1), var(--colorH1), 140%);
+}
+
+::-webkit-input-placeholder {
+    font-family: var(--font-family);
+}
+
+:-ms-input-placeholder {
+    font-family: var(--font-family);
+}
+
+:-moz-placeholder {
+    font-family: var(--font-family);
+}
+
+::-moz-placeholder {
+    font-family: var(--font-family);
+}

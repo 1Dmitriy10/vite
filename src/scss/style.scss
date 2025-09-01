@@ -1,3 +1,33 @@
+//=============================внешние импорты===================================
+
+@use "sass:map";
+@use "sass:meta";
+@use "sass:math";
+//=============================рутовые стили===================================
+@use "./main/mixins-vars"as *; // импортируем с пространством имен
+@use "./main/fonts";
+@use "./main/reset";
+@use "./main/root";
+@use "./main/typography";
+@use "./main/vendor";
+
+//================Импорты компонентов=====================
+@use "./components/header.scss";
+@use "./components/footer.scss";
+
+//================Атомарные стили=====================
+@use "./vendor/atomar.scss";
+
+//========основные стили============
+
 body {
-  background-color: red;
+    background-color: red
 }
+
+.img-wrap {
+    width: 100%;
+    height: 750px;
+    position: relative;
+}
+
+//==================================

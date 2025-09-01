@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+{{> head title='Главная'}}
+
+<body>
+  {{> header}}
+  <main>
+    <div class="img-wrap">
+      <picture>
+        <!-- webp -->
+        <source srcset='@img/webp/8a9d31cdef0dfaa7f731ecdd056aef6f.webp' type='image/webp' />
+        <!-- original -->
+        <img class='img-bg' src='@img/8a9d31cdef0dfaa7f731ecdd056aef6f.png' class='img-responsive' alt=''
+          loading='lazy' />
+      </picture>
+    </div>
+  </main>
+  {{> footer}}
+</body>
+
+</html>

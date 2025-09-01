@@ -1,0 +1,52 @@
+@use "./mixins-vars"as *;
+
+:root {
+
+    //===========Шрифты============
+
+    //===========Цвета===========
+
+    // ===========gap===========
+    --gap: 20px;
+
+
+
+    body {
+        overflow-x: hidden;
+    }
+
+    //container
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+
+        @include respond-to("pc") {
+            max-width: 1210px;
+        }
+
+        @include respond-to("pc-old") {
+            max-width: 1010px;
+        }
+
+        @include respond-to("nout") {
+            max-width: 800px;
+        }
+
+        @include respond-to("tab") {
+            max-width: 650px;
+        }
+
+        @include respond-to("tel") {
+            max-width: 410px;
+        }
+
+        @include respond-to("tel-old") {
+            // max-width: 325px;
+            max-width: 100%;
+        }
+    }
+
+    section {
+        padding: 0 20px;
+    }
+}

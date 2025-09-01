@@ -1,4 +1,4 @@
-import { inputmask } from "../vendor/inputmask.js"
+import Inputmask from 'inputmask';
 
 export function mask() {
      // телефон

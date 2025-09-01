@@ -157,7 +157,7 @@ const webpGenerator = () => {
       console.log('🔄 Starting WebP generation...');
       
       const imagesDir = path.resolve(__dirname, 'src/images');
-      const outputDir = path.resolve(__dirname, 'src/images/webp'); // Сохраняем в src для dev
+      const outputDir = path.resolve(__dirname, 'src/images/webp');
       
       // Проверяем существует ли директория с изображениями
       if (!fs.existsSync(imagesDir)) {
@@ -184,9 +184,10 @@ const webpGenerator = () => {
             if (!fs.existsSync(outputPath)) {
               try {
                 await sharp(inputPath)
-                  .webp({ 
-                    quality: 80, // Уменьшаем качество для оптимизации
-                    effort: 4 // Баланс между скоростью и размером
+                  .webp({
+                    quality: 90,      // Увеличено до 90 для высокого качества
+                    effort: 4,        // 4 — хороший баланс скорости и сжатия (макс. 6, но медленнее)
+                    lossless: false   // Если нужна сжатая, но визуально качественная картинка
                   })
                   .toFile(outputPath);
                 
@@ -252,34 +253,16 @@ const webpGenerator = () => {
   };
 };
 
-// Плагин для копирования шрифтов и изображений
+// Плагин для копирования дополнительных assets
 const copyAssetsPlugin = () => {
   return {
     name: 'copy-assets',
     
     // Копируем при завершении сборки
     async closeBundle() {
-      console.log('📋 Copying assets...');
+      console.log('📋 Copying additional assets...');
       
-      // Копируем шрифты
-      const fontsSrcDir = path.resolve(__dirname, 'src/files/fonts');
-      const fontsDestDir = path.resolve(__dirname, 'dist/files/fonts');
-      
-      if (fs.existsSync(fontsSrcDir)) {
-        if (!fs.existsSync(fontsDestDir)) {
-          fs.mkdirSync(fontsDestDir, { recursive: true });
-        }
-        
-        const fontFiles = fs.readdirSync(fontsSrcDir);
-        for (const file of fontFiles) {
-          if (/\.(woff2|woff|ttf|otf)$/i.test(file)) {
-            fs.copyFileSync(path.join(fontsSrcDir, file), path.join(fontsDestDir, file));
-          }
-        }
-        console.log('✅ Fonts copied');
-      }
-      
-      // Копируем оригинальные изображения
+      // Копируем ВСЕ оригинальные изображения из src/images в dist/images
       const imagesSrcDir = path.resolve(__dirname, 'src/images');
       const imagesDestDir = path.resolve(__dirname, 'dist/images');
       
@@ -290,11 +273,42 @@ const copyAssetsPlugin = () => {
         
         const imageFiles = fs.readdirSync(imagesSrcDir);
         for (const file of imageFiles) {
-          if (/\.(jpg|jpeg|png|gif|svg)$/i.test(file)) {
+          // Копируем все изображения, кроме тех, что уже в webp папке
+          if (!file.endsWith('.webp') && /\.(jpg|jpeg|png|gif|svg|ico)$/i.test(file)) {
             fs.copyFileSync(path.join(imagesSrcDir, file), path.join(imagesDestDir, file));
           }
         }
-        console.log('✅ Original images copied');
+        console.log('✅ Original images copied to dist/images');
+      }
+      
+      // Копируем только дополнительные файлы, которые не обрабатываются Vite
+      const additionalAssets = [
+        { 
+          src: path.resolve(__dirname, 'src/files/icons'), 
+          dest: path.resolve(__dirname, 'dist/files/icons') 
+        },
+        { 
+          src: path.resolve(__dirname, 'src/files/docs'), 
+          dest: path.resolve(__dirname, 'dist/files/docs') 
+        },
+        // Добавляем другие папки, которые нужно скопировать как есть
+      ];
+      
+      for (const asset of additionalAssets) {
+        if (fs.existsSync(asset.src)) {
+          if (!fs.existsSync(asset.dest)) {
+            fs.mkdirSync(asset.dest, { recursive: true });
+          }
+          
+          const files = fs.readdirSync(asset.src);
+          for (const file of files) {
+            fs.copyFileSync(
+              path.join(asset.src, file), 
+              path.join(asset.dest, file)
+            );
+          }
+          console.log(`✅ Copied: ${path.basename(asset.src)}`);
+        }
       }
       
       // Копируем WebP изображения (если они были сгенерированы в src)
@@ -335,7 +349,7 @@ export default defineConfig({
   plugins: [
     fontAutoPlugin(),
     aliasHtmlPlugin(),
-    webpGenerator(), // WebP генератор ДО handlebars
+    webpGenerator(),
     handlebars({
       partialDirectory: path.resolve(__dirname, 'src/html/partials'),
       context: {
@@ -349,11 +363,30 @@ export default defineConfig({
   ],
 
   build: {
-    
     minify: true,
     sourcemap: 'inline',
     outDir: path.resolve(__dirname, 'dist'),
+    
+    // ⚡ ВАЖНО: настройка обработки assets для сохранения оригинальных имен
+    assetsInlineLimit: 0, // Отключаем инлайнинг файлов
     rollupOptions: {
+      output: {
+        // Сохраняем оригинальные имена для шрифтов и изображений
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name && /\.(woff|woff2|eot|ttf|otf)$/i.test(assetInfo.name)) {
+            return `files/fonts/[name][extname]`;
+          }
+          if (assetInfo.name && /\.(jpg|jpeg|png|gif|svg|ico)$/i.test(assetInfo.name)) {
+            return `images/[name][extname]`;
+          }
+          // Для остальных assets (CSS) оставляем хешированные имена в папке assets
+          return `assets/[name]-[hash][extname]`;
+        },
+        // JS файлы попадают в assets
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+      },
+      
       input: {
         index: path.resolve(__dirname, 'src/html/index.html'),
         ui_kit: path.resolve(__dirname, 'src/html/ui-kit.html'),

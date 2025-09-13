@@ -1,0 +1,5 @@
+@use "../main/mixins-vars"as *;
+
+header {
+    padding: 0 clamp-px(16, 20);
+}

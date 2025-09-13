@@ -1,0 +1,5 @@
+@use "../main/mixins-vars"as *;
+
+footer {
+    padding: 0 clamp-px(16, 20);
+}

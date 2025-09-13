@@ -1,21 +1,39 @@
 @use "./mixins-vars"as *;
 
-h1 {
-    @include font(var(--fwH1), var(--fsH1), var(--colorH1), 140%);
-}
+h1 {}
+
+h2 {}
+
+h3 {}
+
+h4 {}
+
+.block-title {}
+
+p {}
+
+ul.ul {}
+
+ol {}
+
+// Плейсхолдер инпутов
 
 ::-webkit-input-placeholder {
-    font-family: var(--font-family);
+    font-family: var(--ff);
+    color: var(--grey06);
 }
 
 :-ms-input-placeholder {
-    font-family: var(--font-family);
+    font-family: var(--ff);
+    color: var(--grey06);
 }
 
 :-moz-placeholder {
-    font-family: var(--font-family);
+    font-family: var(--ff);
+    color: var(--grey06);
 }
 
 ::-moz-placeholder {
-    font-family: var(--font-family);
+    font-family: var(--ff);
+    color: var(--grey06);
 }

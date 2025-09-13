@@ -29,7 +29,7 @@ $gap: 20px;
 
 
 //==============clamp===========================
-@function clamp-px($minFont, $maxFont, $minVp: 375, $maxVp: 1584) {
+@function clamp-px($minFont, $maxFont, $minVp: 375, $maxVp: 1440) {
     @if not math.is-unitless($minFont) or not math.is-unitless($maxFont) {
         @warn "Font arguments should be unitless";
     }

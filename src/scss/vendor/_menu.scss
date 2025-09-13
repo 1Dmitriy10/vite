@@ -1,55 +1,100 @@
 @use "../main/mixins-vars"as *;
 
 //====================[Меню]===============================
-body {
-    height: 9000px;
-}
 
 .nav-list,
 .nav-list-sticky {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: clamp-px(15, 26);
     justify-content: space-between;
     position: relative;
 
-    &.hidden {
-        display: none;
-    }
+    &>.nav-item {
+        align-items: center;
+        display: flex;
 
-    &>li {
-        &.item {
-            position: relative;
+        & .nav-link {
+            font-weight: 600;
+            font-size: 16px;
+            line-height: 135%;
+            text-align: right;
+            color: #000;
+            transition: 0.3s;
+
+            &:hover {
+                transition: 0.3s;
+                color: var(--red);
+            }
         }
 
-        &>.sub-menu.item {
-            min-width: 300px;
+        &>.drop-menu {
+            transition: 0.3s;
+
+            &>svg>path {
+                transition: 0.3s;
+                fill: #1D222F;
+            }
+
         }
 
         &>.sub-menu {
-            display: flex;
-            margin-top: 12px;
-            padding: 50px 0;
-            flex-wrap: wrap;
-            gap: 20px;
+
+            max-height: 500px;
+            display: grid;
+            row-gap: 40px;
+            column-gap: 20px;
+            grid-auto-flow: row dense;
+            grid-auto-rows: minmax(30px, auto);
+            grid-template-columns: repeat(3, 1fr);
+            margin-top: 60px;
+            padding: clamp-px(20, 40);
             position: absolute;
-            width: 100%;
+            top: 0;
+            // width: calc(clamp-px(20, 60) + 100%);
             left: 0;
             z-index: 3;
             transition: 0.3s;
             transition-delay: 0.3s;
             opacity: 0;
             visibility: hidden;
-            background-color: rgb(0, 204, 255);
+            background: var(--grey02);
+            border-radius: 20px;
 
+
+            & .nav-link {
+                font-weight: 500;
+                font-size: 16px;
+                line-height: 150%;
+                color: var(--grey05);
+                transition: 0.3s;
+                width: fit-content;
+                border-bottom: 1px solid transparent;
+
+                &:hover {
+                    transition: 0.3s;
+                    color: var(--red);
+                    border-bottom: 1px solid var(--red);
+                }
+            }
         }
 
         &:hover {
             &>.sub-menu {
-                display: flex;
                 transition: 0.3s;
                 opacity: 1;
                 visibility: visible;
+                z-index: 5;
+            }
+
+            &>.drop-menu {
+                transition: 0.3s;
+                transform: rotate(180deg);
+
+                &>svg>path {
+                    transition: 0.3s;
+                    fill: var(--red)
+                }
             }
         }
 
@@ -107,17 +152,6 @@ body {
 
     }
 
-    &>a {
-        transition: 0.3s;
-
-
-        &:hover {
-            transition: 0.3s;
-            color: black;
-
-        }
-    }
-
 }
 
 .nav__item-wrap {
@@ -139,20 +173,9 @@ body {
     transition: 0.3s;
 }
 
-.nav__item-wrap {
-    font-size: 18px;
-    line-height: 22px;
-    font-weight: 600;
-    color: #666666;
-    -webkit-transition: 0.3s;
-    transition: 0.3s;
-    position: relative;
-    cursor: pointer;
-    margin-left: 0;
-}
-
 .nav__item-opacity {
     position: fixed;
+    z-index: 3;
     top: 50px;
     right: 0;
     transition: 0.3s;
@@ -163,19 +186,71 @@ body {
     background-color: #ffffff;
     box-shadow: 0 0 21px -20px black;
     transform: translateX(150%);
-    transition-delay: 0.3s;
+    transition-delay: 0.5s;
+    border-radius: clamp-px(10, 16);
 
-    &>li>.sub-menu {
-        display: none;
+
+    &>.nav-item {
+        position: relative;
+        transition-delay: 0.5s;
+
+        &>.sub-menu {
+            overflow-y: auto;
+            max-height: clamp-px(400, 750);
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            border-radius: clamp-px(16, 20);
+            gap: 20px !important;
+            padding: clamp-px(25, 40);
+            left: -25px;
+            top: 0;
+            width: 320px;
+            background-color: var(--white);
+            transition-delay: 0.5s !important;
+            overflow: hidden;
+            opacity: 0;
+            transition: 0.1s;
+            transform: translateX(200%);
+
+            & .sub-menu-inner {
+                gap: 0 !important;
+
+                & .nav-item-title {
+                    margin-bottom: 10px !important;
+                }
+            }
+
+            &:hover {
+                &>.sub-menu {
+                    overflow: visible;
+                    opacity: 1;
+                    transition: 0.3s;
+                    transform: translateX(-100%);
+                    transition-delay: 0s !important;
+                    z-index: 5;
+
+                }
+            }
+
+        }
     }
+
+
 }
 
 .drop-menu {
     position: relative;
+    margin-left: clamp-px(5, 10);
+
+    &>svg {
+        margin-top: 2px;
+    }
 }
 
 .nav__item-wrap:hover>.nav__item-opacity {
     transition: 0.3s;
     transform: translateX(0);
     z-index: 10;
+
 }

@@ -3,6 +3,8 @@ import handlebars from 'vite-plugin-handlebars';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
+import tailwindcss from '@tailwindcss/vite';
+// import chokidar from 'chokidar';
 
 // Хелпер для определения веса шрифта
 function getFontWeight(style) {
@@ -36,17 +38,30 @@ function getFormat(ext) {
 
 // Плагин для автоматического подключения шрифтов
 const fontAutoPlugin = () => {
+  let lastFontHash = null;
+
+  // Простая функция для хеширования списка файлов
+  const getFontDirHash = (fontsDir) => {
+    try {
+      const files = fs.readdirSync(fontsDir)
+        .filter(file => /\.(woff2|woff|ttf|otf)$/i.test(file))
+        .sort()
+        .map(file => `${file}-${fs.statSync(path.join(fontsDir, file)).mtimeMs}`)
+        .join('|');
+      return files ? require('crypto').createHash('md5').update(files).digest('hex') : null;
+    } catch {
+      return null;
+    }
+  };
+
   return {
     name: 'font-auto-plugin',
-    
+
     async buildStart() {
       const fontsDir = path.resolve(__dirname, 'src/files/fonts');
       const cssOutputDir = path.resolve(__dirname, 'src/scss/main');
       const cssFilePath = path.join(cssOutputDir, 'fonts.scss');
-      
-      console.log('Looking for fonts in:', fontsDir);
-      console.log('Output SCSS file:', cssFilePath);
-      
+
       if (!fs.existsSync(fontsDir)) {
         console.log('Fonts directory not found, skipping font generation');
         return;
@@ -54,32 +69,37 @@ const fontAutoPlugin = () => {
 
       if (!fs.existsSync(cssOutputDir)) {
         fs.mkdirSync(cssOutputDir, { recursive: true });
-        console.log('Created directory:', cssOutputDir);
       }
+
+      // Получаем хеш текущего состояния папки шрифтов
+      const currentHash = getFontDirHash(fontsDir);
+
+      // Если хеш не изменился — пропускаем генерацию
+      if (lastFontHash === currentHash && fs.existsSync(cssFilePath)) {
+        console.log('✅ fonts.scss is up to date, skipping regeneration');
+        return;
+      }
+
+      console.log('🔄 Fonts changed or first run — regenerating fonts.scss');
 
       try {
         const fontFiles = fs.readdirSync(fontsDir);
-        console.log('Found font files:', fontFiles);
-        
         const fontFaceRules = [];
         const fontFamilies = {};
-        
+
         for (const file of fontFiles) {
           if (/\.(woff2|woff|ttf|otf)$/i.test(file)) {
             const fileName = path.parse(file).name;
             const ext = path.parse(file).ext.slice(1);
-            
-            console.log('Processing font:', fileName);
-            
-            // Парсим название шрифта
+
             const match = fileName.match(/(.*?)([-_](bold|italic|light|medium|regular|black|extrabold|semibold|thin|extralight))?$/i);
-            const familyName = match[1].replace(/[-_]/g, ' ');
-            const style = match[3] || 'regular';
-            
+            const familyName = match ? match[1].replace(/[-_]/g, ' ') : fileName;
+            const style = match && match[3] ? match[3] : 'regular';
+
             if (!fontFamilies[familyName]) {
               fontFamilies[familyName] = [];
             }
-            
+
             fontFamilies[familyName].push({
               file,
               ext,
@@ -89,10 +109,7 @@ const fontAutoPlugin = () => {
             });
           }
         }
-        
-        console.log('Font families:', Object.keys(fontFamilies));
-        
-        // Генерируем @font-face правила
+
         for (const [family, variants] of Object.entries(fontFamilies)) {
           for (const variant of variants) {
             const fontFaceRule = `
@@ -107,16 +124,16 @@ const fontAutoPlugin = () => {
             fontFaceRules.push(fontFaceRule);
           }
         }
-        
-        // Записываем SCSS файл
+
         if (fontFaceRules.length > 0) {
           const cssContent = `/* Auto-generated font styles */\n${fontFaceRules.join('\n\n')}`;
           fs.writeFileSync(cssFilePath, cssContent);
-          console.log(`✅ Generated fonts2.scss with ${fontFaceRules.length} @font-face rules`);
+          console.log(`✅ Generated fonts.scss with ${fontFaceRules.length} @font-face rules`);
+          lastFontHash = currentHash; // обновляем кэш
         } else {
           console.log('❌ No font face rules were generated');
         }
-        
+
       } catch (error) {
         console.error('Error generating font styles:', error);
       }
@@ -147,109 +164,63 @@ const aliasHtmlPlugin = () => {
   };
 };
 
-// Кастомный плагин для генерации WebP
+// Кастомный плагин для генерации WebP — ТОЛЬКО при сборке (build)
 const webpGenerator = () => {
+  let isBuild = false;
+
   return {
     name: 'webp-generator',
-    
-    // Запускаем при старте сборки
-    async buildStart() {
-      console.log('🔄 Starting WebP generation...');
-      
+
+    config(config, { command }) {
+      isBuild = command === 'build';
+    },
+
+    // ❌ Убираем генерацию при dev-старте — больше не нужно
+    // buildStart() { ... },
+
+    // ❌ Убираем отслеживание файлов в dev — не нужно
+    // configureServer() { ... },
+
+    async closeBundle() {
+      // Генерируем WebP ТОЛЬКО при сборке
+      if (!isBuild) return;
+
       const imagesDir = path.resolve(__dirname, 'src/images');
-      const outputDir = path.resolve(__dirname, 'src/images/webp');
-      
-      // Проверяем существует ли директория с изображениями
+      const outputDir = path.resolve(__dirname, 'dist/images/webp');
+
       if (!fs.existsSync(imagesDir)) {
         console.log('📁 Images directory not found, skipping WebP generation');
         return;
       }
 
-      // Создаем директорию для WebP если не существует
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
-        console.log('📁 Created WebP directory:', outputDir);
+        console.log('📁 Created WebP output directory:', outputDir);
       }
 
       try {
         const files = fs.readdirSync(imagesDir);
         let generatedCount = 0;
-        
+
         for (const file of files) {
           if (/\.(jpg|jpeg|png)$/i.test(file)) {
             const inputPath = path.join(imagesDir, file);
             const outputPath = path.join(outputDir, `${path.parse(file).name}.webp`);
-            
-            // Проверяем не существует ли уже WebP версия
-            if (!fs.existsSync(outputPath)) {
-              try {
-                await sharp(inputPath)
-                  .webp({
-                    quality: 90,      // Увеличено до 90 для высокого качества
-                    effort: 4,        // 4 — хороший баланс скорости и сжатия (макс. 6, но медленнее)
-                    lossless: false   // Если нужна сжатая, но визуально качественная картинка
-                  })
-                  .toFile(outputPath);
-                
-                generatedCount++;
-                console.log(`✅ Generated WebP: ${file}`);
-              } catch (error) {
-                console.error(`❌ Error converting ${file}:`, error.message);
-              }
-            } else {
-              console.log(`⏩ WebP already exists: ${file}`);
-            }
+
+            await sharp(inputPath)
+              .webp({ quality: 80, effort: 4 })
+              .toFile(outputPath);
+
+            console.log(`✅ Prod WebP: ${file}`);
+            generatedCount++;
           }
-        }
-        
-        console.log(`🎉 WebP generation complete: ${generatedCount} images converted`);
-        
-      } catch (error) {
-        console.error('❌ Error reading images directory:', error.message);
-      }
-    },
-    
-    // Также генерируем WebP при завершении сборки для production
-    async closeBundle() {
-      if (process.env.NODE_ENV === 'production') {
-        console.log('🏗️ Generating WebP for production...');
-        
-        const imagesDir = path.resolve(__dirname, 'src/images');
-        const outputDir = path.resolve(__dirname, 'dist/images/webp');
-        
-        if (!fs.existsSync(imagesDir)) return;
-        
-        if (!fs.existsSync(outputDir)) {
-          fs.mkdirSync(outputDir, { recursive: true });
         }
 
-        try {
-          const files = fs.readdirSync(imagesDir);
-          
-          for (const file of files) {
-            if (/\.(jpg|jpeg|png)$/i.test(file)) {
-              const inputPath = path.join(imagesDir, file);
-              const outputPath = path.join(outputDir, `${path.parse(file).name}.webp`);
-              
-              try {
-                await sharp(inputPath)
-                  .webp({ 
-                    quality: 80,
-                    effort: 4
-                  })
-                  .toFile(outputPath);
-                
-                console.log(`✅ Production WebP: ${file}`);
-              } catch (error) {
-                console.error(`❌ Production error with ${file}:`, error.message);
-              }
-            }
-          }
-        } catch (error) {
-          console.error('❌ Production WebP error:', error.message);
-        }
+        console.log(`🎉 Generated ${generatedCount} WebP images for production`);
+      } catch (error) {
+        console.error('❌ Error generating production WebP:', error);
       }
-    }
+    },
   };
 };
 
@@ -332,6 +303,66 @@ const copyAssetsPlugin = () => {
   };
 };
 
+// Плагин для автоматического оборачивания <img> в <picture> с WebP при сборке
+const pictureWebpPlugin = () => {
+  let isBuild = false;
+
+  return {
+    name: 'picture-webp-plugin',
+
+    config(config, { command }) {
+      // Определяем режим: build или serve
+      isBuild = command === 'build';
+    },
+    
+    transformIndexHtml(html) {
+      // Работаем только в режиме сборки
+      if (!isBuild) {
+        return html;
+      }
+
+      console.log('🖼️ Wrapping images in <picture> tags for production...');
+      
+      return html.replace(
+        /<img\b([^>]*?\bsrc\s*=\s*(['"])([^"']+?\.(png|jpe?g|jpg))\2[^>]*?)>/gi,
+        (match, attributes, quote, src) => {
+          if (match.includes('data-skip-webp') || match.includes('<picture')) {
+            return match;
+          }
+          
+          let webpSrc;
+          
+          // Обрабатываем разные форматы путей
+          if (src.startsWith('/images/')) {
+            // Путь: /images/filename.jpg → /images/webp/filename.webp
+            webpSrc = src.replace('/images/', '/images/webp/').replace(/\.(png|jpe?g|jpg)$/i, '.webp');
+          } else if (src.startsWith('images/')) {
+            // Путь: images/filename.jpg → images/webp/filename.webp
+            webpSrc = src.replace('images/', 'images/webp/').replace(/\.(png|jpe?g|jpg)$/i, '.webp');
+          } else if (src.startsWith('./images/')) {
+            // Путь: ./images/filename.jpg → ./images/webp/filename.webp
+            webpSrc = src.replace('./images/', './images/webp/').replace(/\.(png|jpe?g|jpg)$/i, '.webp');
+          } else {
+            // Для других путей просто добавляем /webp/
+            const lastSlashIndex = src.lastIndexOf('/');
+            if (lastSlashIndex !== -1) {
+              const path = src.substring(0, lastSlashIndex);
+              const fileName = src.substring(lastSlashIndex + 1);
+              const webpFileName = fileName.replace(/\.(png|jpe?g|jpg)$/i, '.webp');
+              webpSrc = `${path}/webp/${webpFileName}`;
+            } else {
+              // Если нет пути, просто меняем расширение
+              webpSrc = src.replace(/\.(png|jpe?g|jpg)$/i, '.webp');
+            }
+          }
+          
+          return `<picture><source srcset="${webpSrc}" type="image/webp">${match}</picture>`;
+        }
+      );
+    }
+  };
+};
+
 export default defineConfig({
   root: path.resolve(__dirname, 'src'),
   base: './',
@@ -346,21 +377,24 @@ export default defineConfig({
     },
   },
 
-  plugins: [
-    fontAutoPlugin(),
-    aliasHtmlPlugin(),
-    webpGenerator(),
-    handlebars({
-      partialDirectory: path.resolve(__dirname, 'src/html/partials'),
-      context: {
-        title: {
-          index: 'Главная',
-        },
+ plugins: [
+  fontAutoPlugin(),
+  webpGenerator(),
+  handlebars({
+    partialDirectory: path.resolve(__dirname, 'src/html/partials'),
+    context: {
+      title: {
+        index: 'Главная',
       },
-      reloadOnPartialChange: true,
-    }),
-    copyAssetsPlugin(),
-  ],
+    },
+    // reloadOnPartialChange: true,
+  }),
+    aliasHtmlPlugin(),
+  pictureWebpPlugin(),
+
+  copyAssetsPlugin(),
+  tailwindcss(),
+],
 
   build: {
     minify: true,
@@ -399,9 +433,16 @@ export default defineConfig({
   server: {
     open: '/html/index.html',
     watch: {
-      usePolling: true,
-      interval: 1000,
-      ignored: ['**/node_modules/**', '**/.git/**'],
+      // usePolling: true,
+      // interval: 1000,
+      ignored: [
+        '**/node_modules/**',
+      '**/.git/**',
+      '**/dist/**',
+      
+      '**/src/files/**',         // ← игнорируем статику: иконки, PDF и т.д.
+      '**/src/images/webp/**',   // ← особенно если там много файлов
+      ],
     },
   },
 });

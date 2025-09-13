@@ -1,3 +1,6 @@
+// -------------------- Tailwind ------------------------
+import '../scss/tailwind.css';
+
 // -------------------- Стили ------------------------
 import '../scss/style.scss';
 
@@ -19,18 +22,18 @@ import { stickyHeader } from "./libs/stickyHeader.js";
 import { tabs } from "./libs/tabs.js";
 
 // // -------------------------Заголовок для универсальной формы--------------------
-import { setTitlePopupForm } from "./libs/setTitlePopupForm.js";
+// import { setTitlePopupForm } from "./libs/setTitlePopupForm.js";
 
 
 // ---------------------Слайдер swiper-----------------
-import { slider } from "./libs/slider.js";
+import { casesPrevSlider } from "./libs/slider.js";
 
 
 //---------------------Модальные окна------------------
 import { fancybox } from "./libs/fancybox.js";
 
 //------------Навигация(содержание) для блога---------------
-import { blogNavigation } from "./libs/blogNavigation.js";
+// import { blogNavigation } from "./libs/blogNavigation.js";
 
 
 // ---------------------Маска для инпутов--------------
@@ -38,7 +41,7 @@ import { mask } from "./libs/mask.js";
 
 
 // --------------------Плавный скрол----------------
-import { anchorScroll } from "./libs/scroll.js";
+// import { anchorScroll } from "./libs/scroll.js";
 
 
 // -----------------------Карта яндекса-------------------
@@ -46,7 +49,7 @@ import { anchorScroll } from "./libs/scroll.js";
 
 
 //---------------Мой masonry---------------
-import { myMasonry } from "./libs/myMasonry.js";
+// import { myMasonry } from "./libs/myMasonry.js";
 
 
 //------------masonry---------------
@@ -54,37 +57,39 @@ import { myMasonry } from "./libs/myMasonry.js";
 
 
 //------------Прогресс страницы---------------
-import { progressPage } from "./libs/progress.js";
+// import { progressPage } from "./libs/progress.js";
 
 
 //------------Прелоадер---------------
-import { preloader } from "./libs/preloader.js";
+// import { preloader } from "./libs/preloader.js";
 
 
 //------------Слайдер с видео---------------
-import { videoSlider } from "./libs/videoSlider.js";
+// import { videoSlider } from "./libs/videoSlider.js";
 
 
 //---------------Кастомные чекбоксы---------------
-import { customCheckbox } from "./libs/customCheckbox.js";
+// import { customCheckbox } from "./libs/customCheckbox.js";
 
 //---------------Навигация для гита---------------
 import { gitNav } from "./libs/gitNav.js";
 
 //---------------Слайдер мобильного меню---------------
-import { mobMenuSlider } from "./libs/mobMenuSlider.js";
+// import { mobMenuSlider } from "./libs/mobMenuSlider.js";
 
 //------------Галлерея изменение главного изображения при клике---------------
-import { galleryChangeImageClick } from "./libs/galleryChangeImageClick.js";
+// import { galleryChangeImageClick } from "./libs/galleryChangeImageClick.js";
 
 //------------Скрытие липкого блока при достижении определенного блока---------------
-import { hiddenStickyBlock } from "./libs/hiddenStickyBlock.js";
+// import { hiddenStickyBlock } from "./libs/hiddenStickyBlock.js";
 
 //------------Ввод одноразового кода из смс---------------
-import { pincode } from "./libs/getPincode.js";
+// import { pincode } from "./libs/getPincode.js";
 
 //------------Звездный рейтинг---------------
-import { starRating } from "./libs/starRating.js";
+// import { starRating } from "./libs/starRating.js";
+
+
 
 
 
